@@ -13,6 +13,7 @@ class Application:
 
         self.currentMessage = ""
         self.messageStack = []
+        self.sendMessageStack = []
 
         self.window = tk.Tk()
         self.window.title("John Message")
@@ -29,6 +30,7 @@ class Application:
 
         self.launchComponents()
 
+        socket.setdefaulttimeout(0.01)
         thread = threading.Thread(target=(lambda: self.launchConnection()))
         thread.start()
 
@@ -40,7 +42,7 @@ class Application:
             # print(len(self.messageStack))
             self.launchChatUpdateChecker()
 
-            if(len(self.messageStack) > 0):
+            while (len(self.messageStack) > 0):
                 newMessage = self.messageStack.pop()
                 self.chatDisplay.configure(state="normal")
                 self.chatDisplay.insert(tk.END, f"\n<Other> {newMessage}")
@@ -49,6 +51,13 @@ class Application:
                 self.chatDisplay.see("end")
 
             self.window.after(1, test)  # run this function again 2,000 ms from now
+
+            while len(self.sendMessageStack) > 0:
+                newMessage = self.sendMessageStack.pop()
+                try:
+                    self.client.send((newMessage).encode())
+                except:
+                    pass
 
         test()
 
@@ -100,13 +109,16 @@ class Application:
         # self.client.send(("RECEIVED").encode())
         # while True:
         if (self.client is not None):
-            from_server = self.client.recv(4096)
-            self.client.send(("RECEIVED").encode())
-            message = from_server.decode()
-            # message = "Test"
-            # print(message)3220o-32op3
-            self.messageStack.append(message)
-
+            try:
+                from_server = self.client.recv(4096)
+                message = from_server.decode()
+                print(message)
+                # thread = threading.Thread(target=(lambda: receive()))
+                # thread.start()
+                if (message != ""):
+                    self.messageStack.append(message)
+            except Exception as exception:
+                pass
         # threading.Timer(1, (lambda: self.launchChatUpdateChecker())).start()
 
     def onSend(self):
@@ -117,10 +129,7 @@ class Application:
         self.chatDisplay.insert(tk.END, "\n<You> " + userInput)
         self.chatDisplay.configure(state="disabled")
 
-        try:
-            self.client.send((userInput).encode())
-        except:
-            pass
+        self.sendMessageStack.append(userInput)
 
         self.chatDisplay.see("end")
 
