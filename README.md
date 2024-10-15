@@ -14,7 +14,7 @@ This project allows two users to talk through one to one text messages across a 
 
 ## How To Use
 
-### 1) Make sure to python installed and added to your path variables
+### 1) Make sure to install Python and add it to your path variables
 ### 2) Run server.py
 ```
 py .\server.py
